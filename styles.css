@@ -1,0 +1,529 @@
+/* 一些全局变量，方便以后统一改颜色 */
+:root {
+  --bg-body: #05070b;
+  --bg-elevated: #10131b;
+  --bg-elevated-soft: #171b26;
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --accent: #4f9cff;
+  --accent-soft: rgba(79, 156, 255, 0.15);
+  --text-main: #f5f7ff;
+  --text-sub: #9aa1b8;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.6);
+  --transition-fast: 0.18s ease-out;
+  --max-width: 1200px;
+}
+
+/* 去掉默认边距，设置全站字体和背景 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: radial-gradient(circle at top, #101622 0, #05070b 40%, #020308 100%);
+  color: var(--text-main);
+}
+
+/* 顶部导航栏 */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(18px);
+  background: linear-gradient(
+    to bottom,
+    rgba(5, 7, 11, 0.92),
+    rgba(5, 7, 11, 0.7),
+    transparent
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-left,
+.navbar-center,
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Logo 区 */
+.logo-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #4f9cff, #121827);
+  box-shadow: 0 0 12px rgba(79, 156, 255, 0.7);
+}
+
+.logo-text {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #dfe6ff;
+}
+
+/* 中部导航 */
+.navbar-center {
+  flex: 1;
+  justify-content: center;
+  gap: 18px;
+}
+
+.nav-link {
+  font-size: 14px;
+  color: var(--text-sub);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 999px;
+  transition: var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-link.active {
+  color: #e8eeff;
+  background: var(--accent-soft);
+}
+
+/* 搜索框 */
+.search-box {
+  margin-left: 16px;
+}
+
+.search-box input {
+  background: rgba(8, 10, 18, 0.9);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  color: var(--text-main);
+  font-size: 13px;
+  min-width: 220px;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* 右侧按钮和头像 */
+.navbar-right {
+  gap: 10px;
+}
+
+.btn {
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4f9cff, #7f7cff);
+  color: #020308;
+  box-shadow: 0 8px 20px rgba(79, 156, 255, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(79, 156, 255, 0.55);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* 头像占位 */
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #444a63, #151826);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.avatar.small {
+  width: 26px;
+  height: 26px;
+}
+
+.avatar.tiny {
+  width: 22px;
+  height: 22px;
+}
+
+/* Hero 区域 */
+.hero {
+  position: relative;
+  max-width: var(--max-width);
+  margin: 20px auto 10px;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  min-height: 280px;
+}
+
+.hero-image {
+  position: absolute;
+  inset: 0;
+  background-image: url("https://images.pexels.com/photos/3404200/pexels-photo-3404200.jpeg?auto=compress&cs=tinysrgb&w=1600");
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.02);
+}
+
+/* 真实项目中你会把上面的图片地址替换成自己的封面 */
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.1), transparent),
+    linear-gradient(to bottom right, rgba(0, 0, 0, 0.7), rgba(5, 7, 11, 0.95));
+}
+
+.hero-content {
+  position: relative;
+  padding: 28px 32px;
+  max-width: 520px;
+}
+
+.hero-tag {
+  display: inline-block;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #c9d5ff;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 12px;
+}
+
+.hero-title {
+  margin: 0 0 10px;
+  font-size: 26px;
+  line-height: 1.3;
+}
+
+.hero-desc {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: var(--text-sub);
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #d6ddff;
+}
+
+/* 筛选工具栏 */
+.filters {
+  max-width: var(--max-width);
+  margin: 18px auto 0;
+  padding: 8px 4px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+.filters-left,
+.filters-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filters-label {
+  opacity: 0.8;
+}
+
+/* 标签 chip */
+.chip {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 10, 18, 0.7);
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.chip:hover {
+  border-color: rgba(255, 255, 255, 0.26);
+  color: var(--text-main);
+}
+
+.chip-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: #e8eeff;
+}
+
+/* 下拉框 */
+.select {
+  background: rgba(8, 10, 18, 0.9);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-main);
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* 复选框 */
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.checkbox-label input {
+  accent-color: var(--accent);
+}
+
+/* 摄影集瀑布流 */
+.gallery {
+  max-width: var(--max-width);
+  margin: 14px auto 40px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+/* 摄影集卡片 */
+.album-card {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
+  border: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition-fast);
+  cursor: pointer;
+}
+
+.album-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.album-image {
+  height: 180px;
+  background-image: linear-gradient(135deg, #3d4c6e, #10121e);
+  background-size: cover;
+  background-position: center;
+}
+
+/* 模拟不同尺寸的卡片，可选 */
+.album-card.tall .album-image {
+  height: 240px;
+}
+
+.album-card.wide .album-image {
+  height: 150px;
+}
+
+.album-info {
+  padding: 12px 14px 10px;
+}
+
+.album-title {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+.album-meta {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+.album-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.album-author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #d9e0ff;
+}
+
+.album-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* 下载图标状态 */
+.icon.download {
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+}
+
+.icon.download.allowed {
+  border-color: rgba(79, 156, 255, 0.7);
+  color: #d0e2ff;
+}
+
+.icon.download.locked {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #888faa;
+}
+
+.icon.download.original {
+  border-color: #f6c453;
+  color: #f6c453;
+}
+
+/* 页脚 */
+.footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-sub);
+  padding: 16px 0 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: radial-gradient(circle at bottom, #10121e 0, transparent 50%);
+}
+
+/* 响应式：屏幕变窄时布局自动变化 */
+@media (max-width: 992px) {
+  .gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero {
+    margin: 14px 12px 6px;
+  }
+
+  .filters {
+    margin: 10px 12px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .navbar-center {
+    display: none; /* 简化小屏导航：先隐藏中间菜单 */
+  }
+
+  .hero-content {
+    padding: 20px 18px;
+  }
+
+  .hero-title {
+    font-size: 20px;
+  }
+
+  .gallery {
+    grid-template-columns: 1fr;
+    margin: 10px 12px 26px;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+/* 上传面板 */
+.upload-panel {
+  max-width: var(--max-width);
+  margin: 20px auto 10px;
+  padding: 14px 16px;
+  background: var(--bg-elevated-soft);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-soft);
+}
+
+.upload-title {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.upload-label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-sub);
+  margin-bottom: 10px;
+}
+
+#photos-input {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.upload-status {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--text-sub);
+}

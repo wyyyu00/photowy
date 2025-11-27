@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>我的摄影集 | 天才 Photo</title>
+  <!-- 让页面在手机上也好看 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 连接外部样式表 -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const uploadForm = document.getElementById('upload-form');
+    const photosInput = document.getElementById('photos-input');
+    const statusSpan = document.getElementById('upload-status');
+
+    // 如果页面上没有这个表单，直接返回，避免报错
+    if (!uploadForm || !photosInput || !statusSpan) {
+      console.warn('上传表单元素未找到，请检查 id 是否正确。');
+      return;
+    }
+
+    uploadForm.addEventListener('submit', async function (e) {
+      e.preventDefault(); // 阻止默认提交（防止地址变成 ?photos=...）
+
+      const files = photosInput.files;
+      if (!files || files.length === 0) {
+        alert('请先选择要上传的照片');
+        return;
+      }
+
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('photos', file);
+      }
+
+      statusSpan.textContent = '正在上传...';
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (data.ok) {
+          statusSpan.textContent = `上传成功，共 ${data.count} 张。`;
+
+          const gallery = document.querySelector('.gallery');
+          if (gallery && data.files) {
+            data.files.forEach((f) => {
+              const card = document.createElement('article');
+              card.className = 'album-card';
+              card.innerHTML = `
+                <div class="album-image" style="background-image:url('${f.url}')"></div>
+                <div class="album-info">
+                  <h2 class="album-title">${f.originalName}</h2>
+                  <p class="album-meta">1 张照片 · 刚刚上传</p>
+                  <div class="album-footer">
+                    <div class="album-author">
+                      <div class="avatar tiny"></div>
+                      <span>天才</span>
+                    </div>
+                    <div class="album-actions">
+                      <span class="icon download original" title="可下载原图">⬇ 原图</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+              gallery.prepend(card);
+            });
+          }
+        } else {
+          statusSpan.textContent = '上传失败';
+        }
+      } catch (err) {
+        console.error(err);
+        statusSpan.textContent = '上传出错，请查看控制台';
+      }
+    });
+  });
+</script>
+
+
+<body>
+  <!-- 顶部导航栏 -->
+  <header class="navbar">
+    <div class="navbar-left">
+      <div class="logo-circle"></div>
+      <span class="logo-text">天才 Photo</span>
+    </div>
+
+    <nav class="navbar-center">
+      <a href="#" class="nav-link active">发现</a>
+      <a href="#" class="nav-link">摄影集</a>
+      <a href="#" class="nav-link">摄影师</a>
+      <div class="search-box">
+        <input type="text" placeholder="搜索作品 / 标签 / 地点..." />
+      </div>
+    </nav>
+
+    <div class="navbar-right">
+      <button class="btn btn-outline">登录</button>
+      <button class="btn btn-primary">上传作品</button>
+      <div class="avatar"></div>
+    </div>
+  </header>
+
+  <!-- 顶部大图区域（Hero） -->
+  <section class="hero">
+    <div class="hero-image"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="hero-tag">精选摄影集</p>
+      <h1 class="hero-title">城市夜色 · 尤其安静的光</h1>
+      <p class="hero-desc">
+        一组记录夜色与霓虹的作品。光线、雨滴和行人的剪影，构成了我眼里的城市片刻。
+      </p>
+      <div class="hero-meta">
+        <div class="hero-author">
+          <div class="avatar small"></div>
+          <span>by 天才</span>
+        </div>
+        <button class="btn btn-primary">查看摄影集</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 筛选工具栏 -->
+  <section class="filters">
+    <div class="filters-left">
+      <span class="filters-label">分类：</span>
+      <button class="chip chip-active">全部</button>
+      <button class="chip">风光</button>
+      <button class="chip">人像</button>
+      <button class="chip">街拍</button>
+      <button class="chip">纪实</button>
+      <button class="chip">建筑</button>
+    </div>
+    <div class="filters-right">
+      <select class="select">
+        <option>排序：最新</option>
+        <option>排序：最热</option>
+        <option>排序：下载最多</option>
+      </select>
+      <label class="checkbox-label">
+        <input type="checkbox" />
+        <span>仅显示可下载原图</span>
+      </label>
+    </div>
+  </section>
+
+  <!-- 上传区域：简单示例 -->
+<section class="upload-panel">
+  <h2 class="upload-title">上传新的摄影集</h2>
+  <form id="upload-form">
+    <label class="upload-label">
+      选择照片（可多选）：
+      <input id="photos-input" type="file" name="photos" multiple accept="image/*" />
+    </label>
+    <button type="submit" class="btn btn-primary">开始上传</button>
+    <span id="upload-status" class="upload-status"></span>
+  </form>
+</section>
+
+
+  <!-- 摄影集瀑布流区域 -->
+  <main class="gallery">
+    <!-- 摄影集卡片示例 1 -->
+    <article class="album-card">
+      <div class="album-image"></div>
+      <div class="album-info">
+        <h2 class="album-title">森林里的安静光线</h2>
+        <p class="album-meta">24 张照片 · 风光 / 自然</p>
+        <div class="album-footer">
+          <div class="album-author">
+            <div class="avatar tiny"></div>
+            <span>天才</span>
+          </div>
+          <div class="album-actions">
+            <span class="icon">❤ 128</span>
+            <span class="icon">👁 1.2k</span>
+            <span class="icon download allowed" title="可下载中等分辨率">
+              ⬇
+            </span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 摄影集卡片示例 2 -->
+    <article class="album-card tall">
+      <div class="album-image"></div>
+      <div class="album-info">
+        <h2 class="album-title">雨中的街角</h2>
+        <p class="album-meta">16 张照片 · 街拍 / 夜景</p>
+        <div class="album-footer">
+          <div class="album-author">
+            <div class="avatar tiny"></div>
+            <span>天才</span>
+          </div>
+          <div class="album-actions">
+            <span class="icon">❤ 256</span>
+            <span class="icon">👁 2.3k</span>
+            <span class="icon download locked" title="作者已关闭下载">
+              🔒
+            </span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 摄影集卡片示例 3 -->
+    <article class="album-card wide">
+      <div class="album-image"></div>
+      <div class="album-info">
+        <h2 class="album-title">人像 · 柔和自然光</h2>
+        <p class="album-meta">32 张照片 · 人像 / 日系</p>
+        <div class="album-footer">
+          <div class="album-author">
+            <div class="avatar tiny"></div>
+            <span>天才</span>
+          </div>
+          <div class="album-actions">
+            <span class="icon">❤ 512</span>
+            <span class="icon">👁 3.7k</span>
+            <span class="icon download original" title="可下载原图">
+              ⬇ 4K
+            </span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 你可以复制更多 album-card 来模拟更多摄影集 -->
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <p>© 2025 天才 Photo. 版权所有.</p>
+    <p>这只是前端界面示意，实际上传/下载功能需要后端支持。</p>
+  </footer>
+</body>
+</html>
