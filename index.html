@@ -2,85 +2,176 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>我的摄影集 | 天才 Photo</title>
+  <title>我的摄影集 | 王宇 Photo</title>
   <!-- 让页面在手机上也好看 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- 连接外部样式表 -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const uploadForm = document.getElementById('upload-form');
-    const photosInput = document.getElementById('photos-input');
-    const statusSpan = document.getElementById('upload-status');
+  // 1. 初始化 Supabase 客户端
+  const { createClient } = supabase;
 
-    // 如果页面上没有这个表单，直接返回，避免报错
-    if (!uploadForm || !photosInput || !statusSpan) {
-      console.warn('上传表单元素未找到，请检查 id 是否正确。');
-      return;
-    }
+  // TODO: 用你自己的项目 URL 和 anon key 替换下面两行
+  const SUPABASE_URL = 'https://tktotrnetddatrzzybnq.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrdG90cm5ldGRkYXRyenp5Ym5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNTMyNDcsImV4cCI6MjA3OTgyOTI0N30.-BM_5r2qZVTsTq3uNqbWDitNTBTSxXPwIY6lzCz74aI';
+  const BUCKET = 'photowy';
 
-    uploadForm.addEventListener('submit', async function (e) {
-      e.preventDefault(); // 阻止默认提交（防止地址变成 ?photos=...）
 
-      const files = photosInput.files;
-      if (!files || files.length === 0) {
-        alert('请先选择要上传的照片');
-        return;
-      }
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const formData = new FormData();
-      for (const file of files) {
-        formData.append('photos', file);
-      }
+  document.addEventListener("DOMContentLoaded", () => {
 
-      statusSpan.textContent = '正在上传...';
+    const uploadForm = document.getElementById("upload-form");
+    const photosInput = document.getElementById("photos-input");
+    const statusSpan = document.getElementById("upload-status");
+    const gallery = document.querySelector(".gallery");
 
-      try {
-        const res = await fetch('/upload', {
-          method: 'POST',
-          body: formData,
-        });
+    // 页面加载时读取已有图片
+    loadExistingPhotos();
 
-        const data = await res.json();
-        if (data.ok) {
-          statusSpan.textContent = `上传成功，共 ${data.count} 张。`;
+    // 绑定上传事件
+    if (uploadForm && photosInput && statusSpan) {
+      uploadForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-          const gallery = document.querySelector('.gallery');
-          if (gallery && data.files) {
-            data.files.forEach((f) => {
-              const card = document.createElement('article');
-              card.className = 'album-card';
-              card.innerHTML = `
-                <div class="album-image" style="background-image:url('${f.url}')"></div>
-                <div class="album-info">
-                  <h2 class="album-title">${f.originalName}</h2>
-                  <p class="album-meta">1 张照片 · 刚刚上传</p>
-                  <div class="album-footer">
-                    <div class="album-author">
-                      <div class="avatar tiny"></div>
-                      <span>天才</span>
-                    </div>
-                    <div class="album-actions">
-                      <span class="icon download original" title="可下载原图">⬇ 原图</span>
-                    </div>
-                  </div>
-                </div>
-              `;
+        const files = photosInput.files;
+        if (!files || files.length === 0) {
+          alert("请先选择要上传的照片");
+          return;
+        }
+
+        statusSpan.textContent = "正在上传...";
+
+        try {
+          const uploadedItems = [];
+
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            const dot = file.name.lastIndexOf(".");
+            const ext = dot !== -1 ? file.name.slice(dot) : "";
+            const safeName = `photo-${Date.now()}-${i}${ext}`;
+            const safeFile = new File([file], safeName, { type: file.type });
+
+            const path = `albums/${safeName}`;
+
+            const { data, error } = await client.storage
+              .from(BUCKET)
+              .upload(path, safeFile, {
+                cacheControl: "3600",
+                upsert: false,
+              });
+
+            if (error) {
+              console.error("上传失败：", error);
+              throw error;
+            }
+
+            const { data: pub } = client.storage
+              .from(BUCKET)
+              .getPublicUrl(path);
+
+            const url = pub.publicUrl;
+
+            uploadedItems.push({
+              originalName: file.name,
+              safeName,
+              url,
+            });
+          }
+
+          statusSpan.textContent = `上传成功，共 ${uploadedItems.length} 张`;
+
+          if (gallery) {
+            uploadedItems.forEach((item) => {
+              const card = createPhotoCard({
+                title: item.originalName,
+                url: item.url,
+              });
               gallery.prepend(card);
             });
           }
-        } else {
-          statusSpan.textContent = '上传失败';
+        } catch (err) {
+          console.error("上传出错：", err);
+          statusSpan.textContent = "上传失败，请查看控制台";
         }
+      });
+    }
+
+    // 加载已有图片
+    async function loadExistingPhotos() {
+      if (!gallery) return;
+
+      try {
+        const { data, error } = await client.storage
+          .from(BUCKET)
+          .list("albums", {
+            limit: 1000,
+            sortBy: { column: "created_at", order: "desc" },
+          });
+
+        if (error) {
+          console.error("加载失败：", error);
+          return;
+        }
+
+        (data || []).forEach((item) => {
+          const path = `albums/${item.name}`;
+          const { data: pub } = client.storage
+            .from(BUCKET)
+            .getPublicUrl(path);
+
+          const url = pub.publicUrl;
+
+          const card = createPhotoCard({
+            title: item.name,
+            url: url,
+          });
+
+          gallery.appendChild(card);
+        });
       } catch (err) {
-        console.error(err);
-        statusSpan.textContent = '上传出错，请查看控制台';
+        console.error("读取图片时出错：", err);
       }
-    });
+    }
+
+    // 创建照片卡片
+    function createPhotoCard({ title, url }) {
+      const card = document.createElement("article");
+      card.className = "album-card";
+      card.innerHTML = `
+        <div class="album-image" style="background-image: url('${url}')"></div>
+        <div class="album-info">
+          <h2 class="album-title">${title}</h2>
+          <p class="album-meta">1 张照片</p>
+          <div class="album-footer">
+            <div class="album-author">
+              <div class="avatar tiny"></div>
+              <span>王宇</span>
+            </div>
+            <div class="album-actions">
+              <a class="icon download original"
+                 href="${url}?download=${encodeURIComponent(title)}"
+                 target="_blank">
+                ⬇ 原图
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
   });
 </script>
+
+
+
+
 
 
 <body>
@@ -88,7 +179,7 @@
   <header class="navbar">
     <div class="navbar-left">
       <div class="logo-circle"></div>
-      <span class="logo-text">天才 Photo</span>
+      <span class="logo-text">王宇 Photo</span>
     </div>
 
     <nav class="navbar-center">
@@ -120,7 +211,7 @@
       <div class="hero-meta">
         <div class="hero-author">
           <div class="avatar small"></div>
-          <span>by 天才</span>
+          <span>by 王宇</span>
         </div>
         <button class="btn btn-primary">查看摄影集</button>
       </div>
@@ -176,7 +267,7 @@
         <div class="album-footer">
           <div class="album-author">
             <div class="avatar tiny"></div>
-            <span>天才</span>
+            <span>王宇</span>
           </div>
           <div class="album-actions">
             <span class="icon">❤ 128</span>
@@ -198,7 +289,7 @@
         <div class="album-footer">
           <div class="album-author">
             <div class="avatar tiny"></div>
-            <span>天才</span>
+            <span>王宇</span>
           </div>
           <div class="album-actions">
             <span class="icon">❤ 256</span>
@@ -220,7 +311,7 @@
         <div class="album-footer">
           <div class="album-author">
             <div class="avatar tiny"></div>
-            <span>天才</span>
+            <span>王宇</span>
           </div>
           <div class="album-actions">
             <span class="icon">❤ 512</span>
@@ -238,7 +329,7 @@
 
   <!-- 页脚 -->
   <footer class="footer">
-    <p>© 2025 天才 Photo. 版权所有.</p>
+    <p>© 2025 王宇 Photo. 版权所有.</p>
     <p>这只是前端界面示意，实际上传/下载功能需要后端支持。</p>
   </footer>
 </body>

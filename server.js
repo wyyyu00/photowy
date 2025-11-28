@@ -5,7 +5,50 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const express = require('express');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+
+// 关键修改：端口
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`服务器已启动，端口：${PORT}`);
+});
+// 确保 uploads 目录存在
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// Multer 配置略（你原来的那段）
+
+// 静态文件
+app.use(express.static(__dirname));
+app.use('/uploads', express.static(uploadDir));
+
+// 上传接口
+app.post('/upload', upload.array('photos', 30), (req, res) => {
+  const filesInfo = (req.files || []).map((f) => ({
+    originalName: f.originalname,
+    filename: f.filename,
+    url: '/uploads/' + f.filename,
+    size: f.size,
+  }));
+
+  res.json({
+    ok: true,
+    count: filesInfo.length,
+    files: filesInfo,
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`服务器已启动，端口：${PORT}`);
+});
+
 
 // 确保 uploads 目录存在，没有就创建
 const uploadDir = path.join(__dirname, 'uploads');
