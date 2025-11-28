@@ -1,0 +1,223 @@
+for delete<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>摄影作品管理后台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b0c10;
+      color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: rgba(11, 12, 16, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+    header a {
+      color: #999;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    main {
+      padding: 16px 24px 40px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .status {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #aaa;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    thead {
+      background: #14151c;
+    }
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #222;
+      text-align: left;
+    }
+    th {
+      font-weight: 500;
+      color: #ccc;
+    }
+    tr:hover {
+      background: #14151c;
+    }
+    img.thumb {
+      width: 80px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+      display: block;
+    }
+    button {
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button.delete-btn {
+      background: #c0392b;
+      color: #fff;
+    }
+    button.delete-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .danger {
+      color: #ff7675;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>摄影作品管理后台</h1>
+    <a href="index.html">← 返回网站首页</a>
+  </header>
+
+  <main>
+    <div class="status" id="status">正在从云端加载照片列表...</div>
+    <div class="danger">
+      注意：当前删除操作是直接从 Supabase Storage 删除文件，删除后无法恢复。
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>缩略图</th>
+          <th>文件名</th>
+          <th>创建时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="photo-table-body">
+      </tbody>
+    </table>
+  </main>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const { createClient } = supabase;
+
+    // TODO：把这三个改成你的配置
+    const SUPABASE_URL = "https://tktotrnetddatrzzybnq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrdG90cm5ldGRkYXRyenp5Ym5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNTMyNDcsImV4cCI6MjA3OTgyOTI0N30.-BM_5r2qZVTsTq3uNqbWDitNTBTSxXPwIY6lzCz74aI";
+    const BUCKET = "photowy";
+
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const statusEl = document.getElementById("status");
+      const tbody = document.getElementById("photo-table-body");
+
+      // 1. 加载列表
+      loadList();
+
+      async function loadList() {
+        statusEl.textContent = "正在加载 albums/ 目录中的照片...";
+
+        try {
+          const { data, error } = await client.storage
+            .from(BUCKET)
+            .list("albums", {
+              limit: 1000,
+              sortBy: { column: "created_at", order: "desc" },
+            });
+
+          if (error) {
+            console.error("加载列表失败：", error);
+            statusEl.textContent = "加载失败：" + error.message;
+            return;
+          }
+
+          tbody.innerHTML = "";
+
+          (data || []).forEach((item) => {
+            const path = `albums/${item.name}`;
+            const { data: pub } = client.storage
+              .from(BUCKET)
+              .getPublicUrl(path);
+            const url = pub.publicUrl;
+
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+              <td><img class="thumb" src="${url}" alt="${item.name}" /></td>
+              <td>${item.name}</td>
+              <td>${item.created_at || ""}</td>
+              <td><button class="delete-btn">删除</button></td>
+            `;
+
+            const btn = tr.querySelector(".delete-btn");
+            btn.addEventListener("click", async () => {
+              const ok = confirm(`确定要删除：${item.name} 吗？此操作不可恢复！`);
+              if (!ok) return;
+
+              btn.disabled = true;
+              btn.textContent = "删除中...";
+
+              try {
+                const { error: delError } = await client.storage
+                  .from(BUCKET)
+                  .remove([path]);
+
+                if (delError) {
+                  console.error("删除失败：", delError);
+                  alert("删除失败：" + delError.message);
+                  btn.disabled = false;
+                  btn.textContent = "删除";
+                  return;
+                }
+
+                // 删除成功，从表格中移除这一行
+                tr.remove();
+              } catch (err) {
+                console.error("删除出错：", err);
+                alert("删除出错，请查看控制台");
+                btn.disabled = false;
+                btn.textContent = "删除";
+              }
+            });
+
+            tbody.appendChild(tr);
+          });
+
+          if (!data || data.length === 0) {
+            statusEl.textContent = "albums/ 目录中目前没有照片。";
+          } else {
+            statusEl.textContent = `已加载 ${data.length} 个文件。`;
+          }
+        } catch (err) {
+          console.error("加载时异常：", err);
+          statusEl.textContent = "加载出错，请查看控制台。";
+        }
+      }
+    });
+  </script>
+</body>
+</html>
